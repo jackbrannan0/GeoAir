@@ -1,0 +1,4 @@
+error: failed to parse manifest at `/Users/jackbrannan/Documents/GeoAir/rust_core/Cargo.toml`
+
+Caused by:
+  this virtual manifest specifies a `lib` section, which is not allowed
