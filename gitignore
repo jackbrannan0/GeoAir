@@ -1,4 +1,4 @@
 /venv
 .env
 .ds_store
-.gitignore
+gitignore
