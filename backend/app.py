@@ -1,40 +1,37 @@
 from contextlib import asynccontextmanager
-
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
-from pathlib import Path
-from backend.db.session import get_db
-from sqlalchemy.ext.asyncio import AsyncSession
 from backend.db.queries import insert_single_event
 from backend.api.routes.news import fetch_news_data
-from fastapi import Depends
-
-
-
-
-
-
-
-
-
-
-
-app = FastAPI(title="GeoAir API", description="API for GeoAir application", version="1.0.0")
-
-
+from backend.db.session import AsyncSessionLocal
+from sqlalchemy.ext.asyncio import AsyncSession
 from backend.api.routes.news import router as news_router
-app.include_router(news_router, prefix="/api")
+from pathlib import Path
+import os   
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    try:
-        update_news_db()
-    except Exception as e:
-        print(f"Failed to fetch news on startup: {e}")
-    yield    
-app = FastAPI(lifespan=lifespan)
-async def update_news_db(db: AsyncSession = Depends(get_db)):
+    
+    async with AsyncSessionLocal() as db:
+        await update_news_db(db)
+
+    yield
+
+
+
+
+
+app = FastAPI(title="GeoAir API", description="API for GeoAir application", version="1.0.0", lifespan=lifespan)
+
+app.include_router(news_router, prefix="/api")
+
+
+
+
+
+    
+async def update_news_db(db: AsyncSession):
     news_data = await fetch_news_data()
     if not news_data:
         return {"message": "No news data found."}
