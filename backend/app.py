@@ -1,13 +1,34 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
-from backend.db.queries import insert_single_event
+from backend.db.queries import process_and_save_data
 from backend.api.routes.news import fetch_news_data
 from backend.db.session import AsyncSessionLocal
 from sqlalchemy.ext.asyncio import AsyncSession
 from backend.api.routes.news import router as news_router
-from pathlib import Path
-import os   
+from pathlib import Path 
+
+async def update_news_db(db: AsyncSession):
+    news_data = await fetch_news_data()
+    if not news_data:
+        return {"message": "No news data found."}
+    
+    inserted_events = []
+    for event in news_data:
+        try:
+            new_event = await process_and_save_data(db, event, event.get('url'))
+            inserted_events.append({
+                "id": new_event.id,
+                "title": new_event.title,
+                "description": new_event.description,
+                "published_at": new_event.published_at,
+                "location": new_event.location,
+                "outlet": new_event.outlet,
+                "region": new_event.region,
+                "url": new_event.url
+            })
+        except Exception as e:
+            print(f"Error inserting event: {e}")
 
 
 @asynccontextmanager
@@ -31,27 +52,7 @@ app.include_router(news_router, prefix="/api")
 
 
     
-async def update_news_db(db: AsyncSession):
-    news_data = await fetch_news_data()
-    if not news_data:
-        return {"message": "No news data found."}
-    
-    inserted_events = []
-    for event in news_data:
-        try:
-            new_event = await insert_single_event(db, event)
-            inserted_events.append({
-                "id": new_event.id,
-                "title": new_event.title,
-                "description": new_event.description,
-                "published_at": new_event.published_at,
-                "location": new_event.location,
-                "outlet": new_event.outlet,
-                "region": new_event.region,
-                "url": new_event.url
-            })
-        except Exception as e:
-            print(f"Error inserting event: {e}")
+
     
 
 BASE_DIR = Path(__file__).resolve().parent

@@ -1,7 +1,10 @@
 from backend.db.session import get_db
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
+from dotenv import load_dotenv
+import os
 import httpx
+load_dotenv()
 KEYWORDS = {
                     
                     "strike", "military", "troop", "withdrawal", "border", "tensions",
@@ -13,10 +16,6 @@ KEYWORDS = {
 router = APIRouter()
 
 
-@router.get("/news")
-async def get_news():
-    news_data = await fetch_news_data()
-    return news_data
 
 
 
@@ -33,7 +32,8 @@ def contains_keywords(text: str) -> bool:
 
 
 async def fetch_news_data():
-    from backend.db.session import api_key
+    
+    api_key = os.getenv("NEWS_API_KEY")
     url = f"https://newsapi.org/v2/everything?q=aviation&language=en&apiKey={api_key}"
     async with httpx.AsyncClient() as client:
         try:
