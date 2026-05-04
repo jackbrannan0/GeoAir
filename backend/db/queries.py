@@ -40,6 +40,17 @@ async def process_and_save_data(db: AsyncSession, event_data: dict, url: str):
 
     else:    
         return existing_event
+    
+
+
+
+async def load_data(db: AsyncSession):
+    try:
+        need_processing = db.select()
+        return need_processing
+    except:
+        return {"message:", {"Error"}}    
+
 
     
 
