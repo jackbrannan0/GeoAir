@@ -3,7 +3,8 @@ import httpx
 #from datetime import datetime
 
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
-from backend.db.models import Base, GeoPoliticalEven
+
+from backend.db.models import GeoPoliticalEvent
 from backend.db.session import get_db
 from backend.db.queries import insert_single_event
 
@@ -75,8 +76,8 @@ async def fetch_news_data():
             print(response.json())
             filtered_articles = []
             for articles in response.json().get("articles", []):
-                title = articles.get("title") or "",
-                description = articles.get("description") or "",
+                title = articles.get("title") or ""
+                description = articles.get("description") or ""
 
                 combined_text = f"{title} {description}"
 
@@ -94,3 +95,34 @@ async def fetch_news_data():
         
         except httpx.HTTPError as e:
             raise HTTPException(status_code=502, detail=f"News API error: {str(e)}")
+        
+
+
+
+
+from sqlalchemy import select
+
+
+@app.get("/news/db")
+async def get_db_news(db: AsyncSession = Depends(get_db)):
+    query = select(GeoPoliticalEvent)
+    result = await db.execute(query)
+    articles = result.scalars().all()
+    
+    # Logic: Convert the complex SQLAlchemy objects into standard Python dictionaries
+    serialized_articles = []
+    for article in articles:
+        serialized_articles.append({
+            "id": article.id,
+            "title": article.title,
+            "description": article.description,
+            "published_at": article.published_at.isoformat() if article.published_at else None,
+            "location": article.location,
+            "outlet": article.outlet,
+            "region": article.region
+        })
+        
+    return {
+        "count": len(serialized_articles),
+        "data": serialized_articles
+    }
