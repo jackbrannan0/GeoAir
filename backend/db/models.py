@@ -15,3 +15,4 @@ class GeoPoliticalEvent(Base):
     location: Mapped[str] = mapped_column(String(255), nullable=True)
     outlet: Mapped[str] = mapped_column(String(255), nullable=True)
     region: Mapped[str] = mapped_column(String(255), nullable=True)
+    url: Mapped[str] = mapped_column(String(500), unique=True, nullable=True)

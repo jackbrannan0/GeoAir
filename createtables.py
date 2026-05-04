@@ -1,5 +1,5 @@
 import asyncio
-from backend.db.engine import AsyncSessionLocal, engine
+from backend.db.session import AsyncSessionLocal, engine
 from backend.db.models import GeoPoliticalEvent, Base
 
 async def create_tables():
