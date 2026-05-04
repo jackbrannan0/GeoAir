@@ -67,27 +67,27 @@ def contains_keywords(text: str) -> bool:
 
 
 async def fetch_news_data():
-    from backend.db.session import api_url
-    url = f"https://newsapi.org/v2/everything?q=aviation&language=en&apiKey={api_url}"
+    from backend.db.session import api_key
+    url = f"https://newsapi.org/v2/everything?q=aviation&language=en&apiKey={api_key}"
     async with httpx.AsyncClient() as client:
         try:
             
             response = await client.get(url)
-            print(response.json())
+            response.raise_for_status()
             filtered_articles = []
-            for articles in response.json().get("articles", []):
-                title = articles.get("title") or ""
-                description = articles.get("description") or ""
+            for article in response.json().get("articles", []):
+                title = article.get("title") or ""
+                description = article.get("description") or ""
 
                 combined_text = f"{title} {description}"
 
                 if contains_keywords(combined_text):
                     filtered_articles.append({
                         "title": title,
-                        "outlet": articles.get("source", {}).get("name"),
+                        "outlet": article.get("source", {}).get("name"),
                         "description": description,
-                        "url": articles.get("url"),
-                        "published_at": articles.get("publishedAt")
+                        "url": article.get("url"),
+                        "published_at": article.get("publishedAt")
                     })
                     
                 
