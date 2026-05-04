@@ -7,6 +7,7 @@ async def create_tables():
         await conn.run_sync(Base.metadata.create_all)
 
 async def reset_tables():
+    # WARNING: This wipes the entire database schema for a fresh start
     async with engine.begin() as conn:
         # Logic: Completely erase the old table structure
         await conn.run_sync(Base.metadata.drop_all)

@@ -1,5 +1,6 @@
 from backend.db.session import get_db
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from dotenv import load_dotenv
 import os
@@ -20,6 +21,7 @@ router = APIRouter()
 
 
 def contains_keywords(text: str) -> bool:
+    # Basic keyword matching to keep results relevant to aviation/conflict
     if not text:
         return False
     text_lower = text.lower()
@@ -32,7 +34,7 @@ def contains_keywords(text: str) -> bool:
 
 
 async def fetch_news_data():
-    
+    # Pull from NewsAPI and apply local filtering logic
     api_key = os.getenv("NEWS_API_KEY")
     url = f"https://newsapi.org/v2/everything?q=aviation&language=en&apiKey={api_key}"
     async with httpx.AsyncClient() as client:
@@ -65,7 +67,7 @@ async def fetch_news_data():
 @router.get("/news/db")
 async def fetch_news_data_db(db: AsyncSession = Depends(get_db)):
     from backend.db.models import GeoPoliticalEvent
-    result = await db.execute(GeoPoliticalEvent.__table__.select().order_by(GeoPoliticalEvent.published_at.desc()).limit(100))
+    result = await db.execute(select(GeoPoliticalEvent).order_by(GeoPoliticalEvent.published_at.desc()).limit(100))
     events = result.fetchall()
     return [
         {

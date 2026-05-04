@@ -9,6 +9,7 @@ from backend.api.routes.news import router as news_router
 from pathlib import Path 
 
 async def update_news_db(db: AsyncSession):
+    # Sync fresh news articles into the local database
     news_data = await fetch_news_data()
     if not news_data:
         return {"message": "No news data found."}
@@ -33,7 +34,7 @@ async def update_news_db(db: AsyncSession):
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    
+    # Warm-up tasks: populate DB on startup
     async with AsyncSessionLocal() as db:
         await update_news_db(db)
 

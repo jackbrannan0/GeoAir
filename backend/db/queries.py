@@ -1,6 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from datetime import datetime
+from datetime import datetime, timezone
 from backend.db.models import GeoPoliticalEvent
 
 
@@ -19,7 +19,7 @@ async def process_and_save_data(db: AsyncSession, event_data: dict, url: str):
             try:
                 event_data["published_at"] = datetime.fromisoformat(raw_date.replace("Z", "+00:00"))
             except ValueError:
-                event_data["published_at"] = datetime.utcnow()
+                event_data["published_at"] = datetime.now(timezone.utc)
         new_event = GeoPoliticalEvent(
             title=event_data.get("title"),
             description=event_data.get("description"),
