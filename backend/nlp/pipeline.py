@@ -15,7 +15,7 @@ engine = create_async_engine(os.getenv("DATABASE_URL"))
 AsyncSessionLocal = async_sessionmaker(bind=engine, expire_on_commit=False)
 
 
-async def process_data(db_session):
+async def process_data(db_session: AsyncSession):
     from backend.db.queries import load_db
     events = await load_db(db_session)
     combined_text = "".join([e.description for e in events if e.description])
