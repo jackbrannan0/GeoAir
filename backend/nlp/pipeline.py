@@ -30,7 +30,9 @@ async def process_data(db_session):
     for event in events:
         if not event.description:
             continue
-        doc = await loop.run_in_executor(None, nlp, combined_text)
+
+        text_to_analyze = event.description
+        doc = await loop.run_in_executor(None, nlp, text_to_analyze)
         #print("Noun phrases:", [chunk.text for chunk in doc.noun_chunks])
         #print("Verbs:", [token.lemma_ for token in doc if token.pos_ == "VERB"])
         found_verbs = [token.lemma_ for token in doc if token.pos_ == "VERB" and token.lemma_ in GEOPOLITICAL_VERBS]
