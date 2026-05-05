@@ -50,6 +50,16 @@ async def process_data(db_session):
         else:
             print(f"❌ Low Signal: {event.title[:50]}... Skipping.")
 
+        event.processed = True
+
+    try:
+        await db_session.commit()
+        print(f"\n✅ Processed {len(events)} events")
+    except Exception as e:
+        await db_session.rollback()
+        print(f"❌ Failed to commit updates: {e}")
+        raise e
+
 async def main():
     async with AsyncSessionLocal() as session:
         await process_data(session)

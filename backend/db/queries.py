@@ -49,7 +49,7 @@ async def process_and_save_data(db: AsyncSession, event_data: dict, url: str):
 
 async def load_db(db: AsyncSession): 
     from backend.db.models import GeoPoliticalEvent
-    stmt = select(GeoPoliticalEvent)
+    stmt = select(GeoPoliticalEvent).where(GeoPoliticalEvent.processed == False)
     need_processing = await db.execute(stmt)
     return need_processing.scalars().all()
 
