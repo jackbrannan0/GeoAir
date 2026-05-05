@@ -68,7 +68,7 @@ async def fetch_news_data():
 async def fetch_news_data_db(db: AsyncSession = Depends(get_db)):
     from backend.db.models import GeoPoliticalEvent
     result = await db.execute(select(GeoPoliticalEvent).order_by(GeoPoliticalEvent.published_at.desc()).limit(100))
-    events = result.fetchall()
+    events = result.scalars().all()
     return [
         {
             "id": event.id,

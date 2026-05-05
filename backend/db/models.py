@@ -1,5 +1,5 @@
 from datetime import datetime
-from sqlalchemy import Integer, String, Text, DateTime
+from sqlalchemy import Integer, String, Text, DateTime, Boolean
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 class Base(DeclarativeBase):
@@ -16,4 +16,4 @@ class GeoPoliticalEvent(Base):
     outlet: Mapped[str] = mapped_column(String(255), nullable=True)
     region: Mapped[str] = mapped_column(String(255), nullable=True)
     url: Mapped[str] = mapped_column(String(500), unique=True, nullable=True)
-    processed: Mapped[bool] = mapped_column(bool(False), nullable=False)
+    processed: Mapped[bool] = mapped_column(Boolean, default=False)

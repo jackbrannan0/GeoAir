@@ -44,12 +44,18 @@ async def process_and_save_data(db: AsyncSession, event_data: dict, url: str):
 
 
 
-async def load_data(db: AsyncSession):
-    try:
-        need_processing = db.select()
-        return need_processing
-    except:
-        return {"message:", {"Error"}}    
+
+
+
+async def load_db(db: AsyncSession): 
+    from backend.db.models import GeoPoliticalEvent
+    stmt = select(GeoPoliticalEvent)
+    need_processing = await db.execute(stmt)
+    return need_processing.scalars().all()
+
+   
+    
+             
 
 
     
