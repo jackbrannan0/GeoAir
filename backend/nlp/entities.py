@@ -1,8 +1,9 @@
 async def entity_extraction(doc):
+    extracted_locations = []
     for entity in doc.ents:
-                extracted_locations = []
+                
                 # Focusing on locations for your map
                 if entity.label_ in ["GPE", "LOC", "FAC"]:
                     print(f"   📍 Location: {entity.text} ({entity.label_})")
                     extracted_locations.append(entity.text)
-                return extracted_locations
+    return extracted_locations

@@ -6,19 +6,21 @@ from backend.api.routes.news import fetch_news_data
 from backend.db.session import AsyncSessionLocal
 from sqlalchemy.ext.asyncio import AsyncSession
 from backend.api.routes.news import router as news_router
+from backend.api.routes.alerts import router as alerts_router
 from pathlib import Path 
+from backend.nlp.pipeline import process_data
 
-async def update_news_db(db: AsyncSession):
+async def update_db(db: AsyncSession):
     # Sync fresh news articles into the local database
     news_data = await fetch_news_data()
     if not news_data:
         return {"message": "No news data found."}
     
-    inserted_events = []
-    for event in news_data:
+    inserted_news = []
+    for news in news_data:
         try:
-            new_event = await process_and_save_data(db, event, event.get('url'))
-            inserted_events.append({
+            new_event = await process_and_save_data(db, news, news.get('url'))
+            inserted_news.append({
                 "id": new_event.id,
                 "title": new_event.title,
                 "description": new_event.description,
@@ -28,16 +30,23 @@ async def update_news_db(db: AsyncSession):
                 "region": new_event.region,
                 "url": new_event.url
             })
+
         except Exception as e:
-            print(f"Error inserting event: {e}")
+            print(f"Error inserting news: {e}")
+
+    await process_data(db)  # Run the NLP pipeline to extract locations and create map alerts
+    await db.commit()  # Commit all changes after processing
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Warm-up tasks: populate DB on startup
     async with AsyncSessionLocal() as db:
-        await update_news_db(db)
-
+        try:
+            await update_db(db)
+        except Exception as e:
+            await db.rollback()
+            print(f"❌ Startup failed, rolling back: {e}")
     yield
 
 
@@ -47,7 +56,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="GeoAir API", description="API for GeoAir application", version="1.0.0", lifespan=lifespan)
 
 app.include_router(news_router, prefix="/api")
-
+app.include_router(alerts_router, prefix="/api")
 
 
 

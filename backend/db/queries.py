@@ -59,6 +59,54 @@ async def load_db(db: AsyncSession):
 
 
     
+async def save_alerts(db: AsyncSession, location_data_list):
+    from backend.db.models import MapAlerts
+    from backend.geo.geocoder import geocode_location # Ensure this is imported
+    
+    for item in location_data_list:
+        loc_name = item["name"]
+        # This returns a list, e.g., [('32.64', '54.56')] or ['23.5, 121.0']
+        geo_results = await geocode_location(loc_name)
+        
+        if not geo_results:
+            continue
+
+        for res in geo_results:
+            lat, lon = None, None
+
+            # 1. Handle Tuple format: ('51.50', '-0.12')
+            if isinstance(res, (tuple, list)) and len(res) >= 2:
+                lat, lon = res[0], res[1]
+            
+            # 2. Handle String format from overrides: '23.5, 121.0'
+            elif isinstance(res, str) and "," in res:
+                parts = res.split(",")
+                lat, lon = parts[0].strip(), parts[1].strip()
+            
+            # 3. Handle Dictionary format: {"lat": 23.5, "lon": 121.0}
+            elif isinstance(res, dict):
+                lat, lon = res.get("lat"), res.get("lon")
+
+            if lat and lon:
+                new_alert = MapAlerts(
+                    raw_event_id=item["event_id"],
+                    location_name=loc_name,
+                    latitude=float(lat), # Convert string coords to floats
+                    longitude=float(lon),
+                    signals={"source": "nlp_pipeline"}
+                )
+                db.add(new_alert)
+                print(f"   📍 Staged MapAlert: {loc_name} at {lat}, {lon}")
+
+    try:
+        await db.commit()
+        print(f"✅ Successfully inserted alerts for {len(location_data_list)} items")
+    except Exception as e:
+        await db.rollback()
+        print(f"❌ Failed to insert map alerts: {e}")
+        raise e
+    # Note: Removed db.close() as it often causes 'Session is closed' errors 
+    # if the session is managed by a FastAPI lifecycle or caller.
 
 
 

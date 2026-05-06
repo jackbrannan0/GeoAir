@@ -32,3 +32,41 @@ function fetchArticles() {
             articlesContainer.innerHTML = '<p>Error loading articles. Please try again.</p>';
         });
 }
+
+function fetchMapAlerts(){
+    fetch('/api/map/alerts')
+        .then(response => response.json())
+        .then(data => {
+            const alertsContainer = document.getElementById('alerts');
+            alertsContainer.innerHTML = ''; 
+
+            data.forEach(alert => {
+                const alertElement = document.createElement('div');
+                alertElement.classList.add('alert');
+
+                const locationName = document.createElement('h3');
+                locationName.textContent = alert.location_name;
+                alertElement.appendChild(locationName);
+
+                const latitude = document.createElement('p');
+                latitude.textContent = `Latitude: ${alert.latitude}`;
+                alertElement.appendChild(latitude);
+
+                const longitude = document.createElement('p');
+                longitude.textContent = `Longitude: ${alert.longitude}`;
+                alertElement.appendChild(longitude);
+
+
+                const signals = document.createElement('p');
+                signals.textContent = `Signals: ${alert.signals}`;
+                alertElement.appendChild(signals);
+
+                alertsContainer.appendChild(alertElement);
+            });
+        })
+        .catch(error => {
+            console.error('Error fetching map alerts:', error);
+            const alertsContainer = document.getElementById('alerts');
+            alertsContainer.innerHTML = '<p>Error loading map alerts. Please try again.</p>';
+        });
+}
