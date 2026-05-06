@@ -1,6 +1,6 @@
 import redis
 
-# Logic: Establish a connection to the OrbStack Redis container
+
 redis_client = redis.Redis(
     host='localhost', 
     port=6379, 
@@ -9,9 +9,7 @@ redis_client = redis.Redis(
 )
 
 def get_redis_connection():
-    """
-    Logic: Test if the container is reachable before the pipeline starts.
-    """
+    
     try:
         redis_client.ping()
         print("✅ Redis connection successful!")

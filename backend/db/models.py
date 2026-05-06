@@ -1,5 +1,5 @@
 from datetime import datetime
-from sqlalchemy import Integer, String, Text, DateTime, Boolean
+from sqlalchemy import Integer, String, Text, DateTime, Boolean, JSON
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 class Base(DeclarativeBase):
@@ -23,7 +23,7 @@ class MapAlerts(Base):
     __tablename__ = "map_alerts"   
     id: Mapped[int] = mapped_column(Integer, primary_key=True) 
     raw_event_id: Mapped[int] = mapped_column(Integer, nullable=False)
-    extracted_locations: Mapped[dict] = mapped_column(Text, nullable=False)  # Store as JSON string
+    extracted_locations: Mapped[dict] = mapped_column(JSON, nullable=False)  # Store as JSON
     longitude: Mapped[float] = mapped_column(nullable=True)
     latitude: Mapped[float] = mapped_column(nullable=True)
 
