@@ -4,10 +4,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 from dotenv import load_dotenv
 import os
+from backend.nlp.entities import entity_extraction
 load_dotenv()
 
-GEOPOLITICAL_VERBS = {"intercept", "ground", "divert", "resume", "seize", "ban", "restrict", "close"}
+GEOPOLITICAL_VERBS = {"intercept", "ground", "divert", "resume", "seize", "ban", "restrict", "close", "jamming", "gps", "gnss", "spoofing"}
 GEOPOLITICAL_NOUNS = {"airspace", "sanction", "notam", "corridor", "border", "conflict", "missile"}
+HIGH_PRIORITY_REGIONS = {"ukraine", "gaza", "iran", "taiwan", "hormuz"}
 # Load English tokenizer, tagger, parser and NER
 nlp = spacy.load("en_core_web_sm")
 
@@ -23,7 +25,7 @@ async def process_data(db_session: AsyncSession):
         print("No text found to process")
         return
 
-
+    
 
     loop = asyncio.get_running_loop()
 
@@ -37,16 +39,15 @@ async def process_data(db_session: AsyncSession):
         #print("Verbs:", [token.lemma_ for token in doc if token.pos_ == "VERB"])
         found_verbs = [token.lemma_ for token in doc if token.pos_ == "VERB" and token.lemma_ in GEOPOLITICAL_VERBS]
         found_nouns = [token.text.lower() for token in doc if token.text.lower() in GEOPOLITICAL_NOUNS]
+        found_locations = [token.text.lower() for token in doc if token.text.lower() in HIGH_PRIORITY_REGIONS]
 
-        if found_verbs or found_nouns:
+        if found_verbs or found_nouns or found_locations:
             print(f"\n✅ High Signal: {event.title[:50]}...")
-            print(f"   Signals: {set(found_verbs)} | {set(found_nouns)}")
+            print(f"   Signals: {set(found_verbs)} | {set(found_nouns)} | {set(found_locations)}")
             
             # Logic: Only extract entities for high-signal articles
-            for entity in doc.ents:
-                # Focusing on locations for your map
-                if entity.label_ in ["GPE", "LOC", "FAC"]:
-                    print(f"   📍 Location: {entity.text} ({entity.label_})")
+            locations = await entity_extraction(doc)
+            
         else:
             print(f"❌ Low Signal: {event.title[:50]}... Skipping.")
 
