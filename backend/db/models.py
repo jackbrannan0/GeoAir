@@ -23,9 +23,11 @@ class MapAlerts(Base):
     __tablename__ = "map_alerts"   
     id: Mapped[int] = mapped_column(Integer, primary_key=True) 
     raw_event_id: Mapped[int] = mapped_column(Integer, nullable=False)
-    extracted_locations: Mapped[dict] = mapped_column(JSON, nullable=False)  # Store as JSON
+    location_name: Mapped[str] = mapped_column(String(255), nullable=True)
     longitude: Mapped[float] = mapped_column(nullable=True)
     latitude: Mapped[float] = mapped_column(nullable=True)
 
-    sentiment_score: Mapped[float] = mapped_column(default=0.0)
-    severity_score: Mapped[str] = mapped_column(String(50), default="low")
+    #sentiment_score: Mapped[float] = mapped_column(default=0.0)
+    #severity_score: Mapped[str] = mapped_column(String(50), default="low")
+
+    signals: Mapped[JSON] = mapped_column(JSON, nullable=True)  

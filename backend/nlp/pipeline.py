@@ -1,5 +1,6 @@
 import spacy
 import asyncio
+from backend.db.models import MapAlerts
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 from dotenv import load_dotenv
@@ -44,13 +45,16 @@ async def process_data(db_session: AsyncSession):
         signal_locations = [token.text.lower() for token in doc if token.text.lower() in HIGH_PRIORITY_REGIONS]
 
         if found_verbs or found_nouns or signal_locations:
-            found_locations.extend(signal_locations)
             print(f"\n✅ High Signal: {event.title[:50]}...")
             print(f"   Signals: {set(found_verbs)} | {set(found_nouns)} | {set(signal_locations)}")
-            locations = await entity_extraction(doc)
+            extracted = await entity_extraction(doc)
+            all_hits = list(set(signal_locations + (extracted or [])))
               # This now gets ['Taiwan', 'Iran'] instead of None
-            if locations:
-                    found_locations.extend(locations)
+            for loc_name in all_hits:
+                found_locations.append({
+                    "name": loc_name,
+                    "event_id": event.id
+                })
                 
             
             # Logic: Only extract entities for high-signal articles
@@ -58,8 +62,9 @@ async def process_data(db_session: AsyncSession):
         else:
             print(f"❌ Low Signal: {event.title[:50]}... Skipping.")
 
-        event.processed = False
+        event.processed = True
         
+
     try:
         await db_session.commit()
         print(f"\n✅ Processed {len(events)} events")
@@ -72,10 +77,53 @@ async def process_data(db_session: AsyncSession):
     else:
         print("No locations found in any articles.")
         return []
+    
+
+
+
+
+
+
 async def main():
     async with AsyncSessionLocal() as session:
-        found_locations = await process_data(session)
-        await geocode_location(found_locations)
+        location_data_list = await process_data(session)
+
+
+        if not location_data_list:
+            print("No locations extracted from articles.")
+            return
+        
+
+
+        
+        unique_names = list(set(item["name"] for item in location_data_list))
+        geo_results = await geocode_location(unique_names)
+        coords_map = {res['address']: res for res in geo_results if 'address' in res}  
+        
+        for item in location_data_list:
+            loc_name = item["name"]
+            coords = coords_map.get(loc_name)
+            if coords and coords.get("lat"):
+                new_alert = MapAlerts(
+                    raw_event_id=item["event_id"],
+                    location_name=loc_name,
+                    latitude=coords["lat"],
+                    longitude=coords["lon"],
+                    signals={"source": "nlp_pipeline"}
+                )
+                session.add(new_alert)
+        try:
+            await session.commit()
+            print(f"✅ Inserted {len(location_data_list)} map alerts")
+        except Exception as e:
+            await session.rollback()
+            print(f"❌ Failed to insert map alerts: {e}")
+            raise e
+        finally:
+            await session.close()
+        
+        
+
 
 if __name__ == "__main__":
      asyncio.run(main())
