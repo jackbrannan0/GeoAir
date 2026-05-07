@@ -72,7 +72,7 @@ async def process_data(db_session: AsyncSession):
                     elif isinstance(res, (tuple, list)) and len(res) >= 2:
                         lat = res[0]
                         lon = res[1]
-                        # If your tuple has a 3rd element for address, use res[2]
+                        # If your tuple has a 3rd element for address, use res[2]0
                         addr = res[2] if len(res) > 2 else "Unknown"
 
                     # Final Check: Do we have the coordinates now?
