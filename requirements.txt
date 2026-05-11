@@ -10,6 +10,7 @@ fastapi==0.136.1
 fastapi-cli==0.0.24
 fastapi-cloud-cli==0.17.1
 fastar==0.11.0
+feedparser==6.0.10
 h11==0.16.0
 httpcore==1.0.9
 httptools==0.7.1

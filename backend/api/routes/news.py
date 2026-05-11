@@ -1,3 +1,4 @@
+from backend.db.models import GeoPoliticalEvent
 from backend.db.session import get_db
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
@@ -65,6 +66,7 @@ async def run_rss_ingestion(db: AsyncSession):
             
             
             new_event = await process_and_save_data(db, article_data, article_data.get('url'))
+            print("found rss data")
             inserted_news.append(new_event)
 
     return inserted_news

@@ -3,7 +3,8 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from backend.db.queries import process_and_save_data
 from backend.api.routes.news import fetch_news_data, run_rss_ingestion
-from backend.db.session import AsyncSessionLocal
+from backend.db.session import AsyncSessionLocal, engine
+from backend.db.models import Base
 from sqlalchemy.ext.asyncio import AsyncSession
 from backend.api.routes.news import router as news_router
 from backend.api.routes.alerts import router as alerts_router
@@ -12,55 +13,33 @@ from backend.nlp.pipeline import process_data
 
 async def update_db(db: AsyncSession):
     # Sync fresh news articles into the local database
+    
+    await run_rss_ingestion(db)  
+
     news_data_newsAPI = await fetch_news_data(db)
-    news_data_rss = await run_rss_ingestion(db)
-    if not news_data_newsAPI and not news_data_rss:
-        return {"message": "No news data found."}
+
+
+    if news_data_newsAPI and isinstance(news_data_newsAPI[0], dict):
+        for news in news_data_newsAPI:
+            try:
+                await process_and_save_data(db, news, news.get('url'))
+            except Exception as e:
+                print(f"Error inserting NewsAPI article: {e}")
+
+    # 4. Processing Logic: Run the NLP pipeline on ALL unprocessed events
+    # This includes the RSS events saved in step 1 [cite: 131, 192]
+    await process_data(db)  
     
-    
-
-    inserted_news = []
-    for news in news_data_newsAPI:
-        try:
-            new_event = await process_and_save_data(db, news, news.get('url'))
-            inserted_news.append({
-                "id": new_event.id,
-                "title": new_event.title,
-                "description": new_event.description,
-                "published_at": new_event.published_at,
-                "location": new_event.location,
-                "outlet": new_event.outlet,
-                "region": new_event.region,
-                "url": new_event.url
-            })
-
-        except Exception as e:
-            print(f"Error inserting news: {e}")
-
-    for news in news_data_rss:
-        try:
-            new_event = await process_and_save_data(db, news, news.get('url'))
-            inserted_news.append({
-                "id": new_event.id,
-                "title": new_event.title,
-                "description": new_event.description,
-                "published_at": new_event.published_at,
-                "location": new_event.location,
-                "outlet": new_event.outlet,
-                "region": new_event.region,
-                "url": new_event.url
-            })
-
-        except Exception as e:
-            print(f"Error inserting RSS news: {e}")        
-
-    await process_data(db)  # Run the NLP pipeline to extract locations and create map alerts
-    await db.commit()  # Commit all changes after processing
+    # 5. Final Commit: Ensure everything is saved to the DB [cite: 131, 196]
+    await db.commit()
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Warm-up tasks: populate DB on startup
+    # Ensure database tables exist before application startup
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+
     async with AsyncSessionLocal() as db:
         try:
             await update_db(db)

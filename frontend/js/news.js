@@ -1,6 +1,11 @@
 function fetchArticles() {
     fetch('/api/news/db')
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            return response.json();
+        })
         .then(data => {
             const articlesContainer = document.getElementById('articles');
             articlesContainer.innerHTML = ''; 

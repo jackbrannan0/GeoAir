@@ -1,3 +1,4 @@
 /venv
 .env
 .ds_store
+/node_modules
