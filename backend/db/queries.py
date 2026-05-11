@@ -15,11 +15,13 @@ async def process_and_save_data(db: AsyncSession, event_data: dict, url: str):
     existing_event = result.scalar_one_or_none()
     if existing_event is None:
         raw_date = event_data.get("published_at")
-        if raw_date:
+        if isinstance(raw_date, str):
             try:
                 event_data["published_at"] = datetime.fromisoformat(raw_date.replace("Z", "+00:00"))
             except ValueError:
                 event_data["published_at"] = datetime.now(timezone.utc)
+        elif raw_date is None:
+            event_data["published_at"] = datetime.now(timezone.utc)
         new_event = GeoPoliticalEvent(
             title=event_data.get("title"),
             description=event_data.get("description"),

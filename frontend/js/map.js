@@ -36,6 +36,7 @@ function fetchMapAlerts(){
                 marker.bindPopup(`
                     <div style="font-family: sans-serif;">
                         <b style="color: ${alert.severity_label === 'high' ? 'red' : 'navy'};">
+                            ${alert.title || 'Event Title'} - <b>
                             ${alert.location_name || 'Event Location'}
                         </b><br>
                         <hr>

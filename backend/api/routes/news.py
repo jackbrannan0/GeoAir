@@ -3,7 +3,10 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from dotenv import load_dotenv
+from datetime import datetime
+from time import mktime
 import os
+import feedparser
 import httpx
 load_dotenv()
 KEYWORDS = {
@@ -14,6 +17,13 @@ KEYWORDS = {
                     "airlines", "aviation", "airspace", "flight", "faa", "nato", 
                     "airport", "missile", "drone"
                 }
+
+
+
+RSS_FEEDS = {
+    "BBC": "http://feeds.bbci.co.uk/news/world/rss.xml",
+    "Al Jazeera": "https://www.aljazeera.com/xml/rss/all.xml",
+}
 router = APIRouter()
 
 
@@ -21,7 +31,7 @@ router = APIRouter()
 
 
 def contains_keywords(text: str) -> bool:
-    # Basic keyword matching to keep results relevant to aviation/conflict
+
     if not text:
         return False
     text_lower = text.lower()
@@ -29,6 +39,35 @@ def contains_keywords(text: str) -> bool:
 
 
 
+    
+async def run_rss_ingestion(db: AsyncSession):
+    from backend.db.queries import process_and_save_data
+    inserted_news = []
+    for outlet, url in RSS_FEEDS.items():
+        feed = feedparser.parse(url)
+        
+        for entry in feed.entries:
+
+            combined_text = f"{entry.title} {getattr(entry, 'summary', '')}"
+            if not contains_keywords(combined_text):
+                continue
+
+
+            published_dt = datetime.fromtimestamp(mktime(entry.published_parsed))
+            
+            article_data = {
+                "title": entry.title,
+                "url": entry.link,
+                "description": getattr(entry, 'summary', ""),
+                "outlet": outlet,
+                "published_at": published_dt
+            }
+            
+            
+            new_event = await process_and_save_data(db, article_data, article_data.get('url'))
+            inserted_news.append(new_event)
+
+    return inserted_news
 
 async def fetch_news_data(db: AsyncSession):
     # Pull from NewsAPI and apply local filtering logic
