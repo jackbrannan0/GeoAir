@@ -27,7 +27,7 @@ class MapAlerts(Base):
     longitude: Mapped[float] = mapped_column(nullable=True)
     latitude: Mapped[float] = mapped_column(nullable=True)
 
-    #sentiment_score: Mapped[float] = mapped_column(default=0.0)
-    #severity_score: Mapped[str] = mapped_column(String(50), default="low")
+    sentiment_score: Mapped[float] = mapped_column(default=0.0)
+    severity_label: Mapped[str] = mapped_column(String(50), default="low")
 
     signals: Mapped[JSON] = mapped_column(JSON, nullable=True)  

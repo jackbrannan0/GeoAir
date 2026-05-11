@@ -12,10 +12,15 @@ from backend.nlp.pipeline import process_data
 
 async def update_db(db: AsyncSession):
     # Sync fresh news articles into the local database
-    news_data = await fetch_news_data()
+    news_data = await fetch_news_data(db)
     if not news_data:
         return {"message": "No news data found."}
     
+    if news_data and "id" in news_data[0]:
+        print('data already in db')
+        return
+    
+
     inserted_news = []
     for news in news_data:
         try:
@@ -46,7 +51,7 @@ async def lifespan(app: FastAPI):
             await update_db(db)
         except Exception as e:
             await db.rollback()
-            print(f"❌ Startup failed, rolling back: {e}")
+            print(f" Startup failed, rolling back: {e}")
     yield
 
 

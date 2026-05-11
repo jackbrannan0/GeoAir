@@ -6,17 +6,25 @@ router = APIRouter()
 
 @router.get("/map/alerts")
 async def fetch_alerts(db: AsyncSession = Depends(get_db)):
-    from backend.db.models import MapAlerts
-    result = await db.execute(select(MapAlerts).limit(100))
-    events = result.scalars().all()
+    from backend.db.models import MapAlerts, GeoPoliticalEvent
+    query =  (
+        select(MapAlerts, GeoPoliticalEvent.title, GeoPoliticalEvent.description) 
+        .join(GeoPoliticalEvent, MapAlerts.raw_event_id == GeoPoliticalEvent.id)
+        .limit(100)
+        )
+    result = await db.execute(query)
+    rows = result.all()
     return [
         {
-            "id": event.id,
-            "latitude": event.latitude,
-            "longitude": event.longitude,
-            "location_name": event.location_name,
-            "raw_event_id": event.raw_event_id,
-            "signals": event.signals
+            "id": alert.id,
+            "latitude": alert.latitude,
+            "longitude": alert.longitude,
+            "location_name": alert.location_name,
+            "description": description,
+            "title": title,
+            "signals": alert.signals,
+            "sentiment_score": alert.sentiment_score,
+            "severity_label": alert.severity_label
         }
-        for event in events
+        for alert, title, description in rows
     ]
