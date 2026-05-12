@@ -30,4 +30,17 @@ class MapAlerts(Base):
     sentiment_score: Mapped[float] = mapped_column(default=0.0)
     severity_label: Mapped[str] = mapped_column(String(50), default="low")
 
-    signals: Mapped[JSON] = mapped_column(JSON, nullable=True)  
+    signals: Mapped[JSON] = mapped_column(JSON, nullable=True)
+
+
+
+class FlightPosition(Base):
+    __tablename__ = "flight_positions"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    flight_number: Mapped[str] = mapped_column(String(50), nullable=False)
+    latitude: Mapped[float] = mapped_column(nullable=False)
+    longitude: Mapped[float] = mapped_column(nullable=False)
+    altitude: Mapped[float] = mapped_column(nullable=True)
+    timestamp: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    heading: Mapped[float] = mapped_column(nullable=True)
+    speed: Mapped[float] = mapped_column(nullable=True)      

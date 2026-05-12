@@ -12,7 +12,7 @@ from pathlib import Path
 from backend.nlp.pipeline import process_data
 
 async def update_db(db: AsyncSession):
-    # Sync fresh news articles into the local database
+
     
     await run_rss_ingestion(db)  
 
@@ -26,17 +26,16 @@ async def update_db(db: AsyncSession):
             except Exception as e:
                 print(f"Error inserting NewsAPI article: {e}")
 
-    # 4. Processing Logic: Run the NLP pipeline on ALL unprocessed events
-    # This includes the RSS events saved in step 1 [cite: 131, 192]
+
     await process_data(db)  
     
-    # 5. Final Commit: Ensure everything is saved to the DB [cite: 131, 196]
+    
     await db.commit()
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Ensure database tables exist before application startup
+
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
