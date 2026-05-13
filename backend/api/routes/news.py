@@ -1,4 +1,3 @@
-from backend.db.models import GeoPoliticalEvent
 from backend.db.session import get_db
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select

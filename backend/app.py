@@ -14,21 +14,24 @@ from backend.nlp.pipeline import process_data
 async def update_db(db: AsyncSession):
 
     
-    await run_rss_ingestion(db)  
+    await run_rss_ingestion(db)
+    print("RSS ingestion completed.")  
 
     news_data_newsAPI = await fetch_news_data(db)
+    print("Fetched news data from NewsAPI.")
 
 
     if news_data_newsAPI and isinstance(news_data_newsAPI[0], dict):
         for news in news_data_newsAPI:
             try:
                 await process_and_save_data(db, news, news.get('url'))
+                print("Data saved to database.")
             except Exception as e:
                 print(f"Error inserting NewsAPI article: {e}")
 
 
     await process_data(db)  
-    
+    print("Processed NLP pipeline.")
     
     await db.commit()
 
@@ -42,6 +45,7 @@ async def lifespan(app: FastAPI):
     async with AsyncSessionLocal() as db:
         try:
             await update_db(db)
+            print("Startup tasks completed successfully.")
         except Exception as e:
             await db.rollback()
             print(f" Startup failed, rolling back: {e}")
