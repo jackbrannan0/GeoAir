@@ -58,17 +58,17 @@ async def process_data(db_session: AsyncSession):
         signal_locations = [token.text.lower() for token in doc if token.text.lower() in HIGH_PRIORITY_REGIONS]
         
         if found_verbs or found_nouns or signal_locations:
-            print(f"\n High Signal: {event.title[:50]}...")
+            print(f"\n high signal: {event.title[:50]}...")
             
             extracted = await entity_extraction(doc)
             all_hits = list(set(signal_locations + (extracted or [])))
             
             if all_hits:
-                print(f"DEBUG: Found hits for {event.id}: {all_hits}")
+                print(f"found hits for {event.id}: {all_hits}")
                 geo_results = await geocode_location(all_hits)
                 sentiment_label, sentiment_score = await analyze_sentiment(text_to_analyze)
                 print(f"{sentiment_label}: {sentiment_score}")
-                print(f"DEBUG: Geocoder returned {len(geo_results)} results: {geo_results}")
+                print(f"geocoder returned {len(geo_results)} results: {geo_results}")
                 
 
                 for res in geo_results:
@@ -95,14 +95,14 @@ async def process_data(db_session: AsyncSession):
                             severity_label="high" if sentiment_label == "negative" else "medium" if sentiment_label == "neutral" else "low"
                         )
                         db_session.add(new_alert)
-                        print(f"    Alert Staged: {addr} ({lat}, {lon})")
+                        print(f"    alert staged: {addr} ({lat}, {lon})")
                     else:
-                        print(f"    Result skipped: Could not parse coordinates from {res}")
+                        print(f"    result skipped: Could not parse coordinates from {res}")
     
         event.processed = True
 
 
-    try:
+    try: 
         await db_session.commit()
         print(f"\nPipeline Complete: Processed {len(events)} events.")
     except Exception as e:
