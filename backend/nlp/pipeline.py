@@ -69,7 +69,6 @@ async def process_data(db_session: AsyncSession):
                 sentiment_label, sentiment_score = await analyze_sentiment(text_to_analyze)
                 print(f"{sentiment_label}: {sentiment_score}")
                 print(f"geocoder returned {len(geo_results)} results: {geo_results}")
-                
 
                 for res in geo_results:
                     lat, lon, addr = None, None, "Unknown"

@@ -71,7 +71,6 @@ async def run_rss_ingestion(db: AsyncSession):
     return inserted_news
 
 async def fetch_news_data(db: AsyncSession):
-    # Pull from NewsAPI and apply local filtering logic
     api_key = os.getenv("NEWS_API_KEY")
     url = f"https://newsapi.org/v2/everything?q=aviation&language=en&apiKey={api_key}"
 
