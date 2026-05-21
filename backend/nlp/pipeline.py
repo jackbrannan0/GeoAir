@@ -45,64 +45,16 @@ async def process_data(db_session: AsyncSession):
         return []
 
     loop = asyncio.get_running_loop()
-
-    for event in events:
-        await process_single_event(event, loop)
-    '''for event in events:
-        print(f"\nprocessing event {event.id}: {event.title[:50]}...")
-        if not event.description:
-            continue
-
-        text_to_analyze = event.description
-        doc = await loop.run_in_executor(None, nlp, text_to_analyze)
-        
-        found_verbs = [token.lemma_ for token in doc if token.pos_ == "VERB" and token.lemma_ in GEOPOLITICAL_VERBS]
-        found_nouns = [token.text.lower() for token in doc if token.text.lower() in GEOPOLITICAL_NOUNS]
-        signal_locations = [token.text.lower() for token in doc if token.text.lower() in HIGH_PRIORITY_REGIONS]
-        
-        if found_verbs or found_nouns or signal_locations:
-            print(f"\n high signal: {event.title[:50]}...")
-            
-            extracted = await entity_extraction(doc)
-            all_hits = list(set(signal_locations + (extracted or [])))
-            
-            if all_hits:
-                print(f"found hits for {event.id}: {all_hits}")
-                geo_results = await geocode_location(all_hits)
-                sentiment_label, sentiment_score = await analyze_sentiment(text_to_analyze)
-                print(f"{sentiment_label}: {sentiment_score}")
-                print(f"geocoder returned {len(geo_results)} results: {geo_results}")
-
-                for res in geo_results:
-                    lat, lon, addr = None, None, "Unknown"
-
-                    if isinstance(res, dict):
-                        lat = res.get("lat")
-                        lon = res.get("lon")
-                        addr = res.get("address", "Unknown")
-                    
-                    elif isinstance(res, (tuple, list)) and len(res) >= 2:
-                        lat = res[0]
-                        lon = res[1]
-                        addr = res[2] if len(res) > 2 else "Unknown"
-
-                    if lat and lon:
-                        new_alert = MapAlerts(
-                            raw_event_id=event.id,
-                            location_name=addr,
-                            latitude=float(lat), 
-                            longitude=float(lon),
-                            signals={"source": "nlp_pipeline"},
-                            sentiment_score=sentiment_score,
-                            severity_label="high" if sentiment_label == "negative" else "medium" if sentiment_label == "neutral" else "low"
-                        )
-                        db_session.add(new_alert)
-                        print(f"    alert staged: {addr} ({lat}, {lon})")
-                    else:
-                        print(f"    result skipped: Could not parse coordinates from {res}")
+    sem = asyncio.Semaphore(10)
     
-        event.processed = True'''
+    async def throttled_worker(event):
 
+    async with sem:
+        await process_single_event(event, loop)
+
+    tasks = [throttled_worker(event) for event in events]
+    results = await asyncio.gather(*tasks)
+    # needs finishing
 
     try: 
         await db_session.commit()
@@ -122,7 +74,7 @@ async def process_single_event(event, loop):
         print(f"\nprocessing event {event.id}: {event.title[:50]}...")
         if not event.description:
             print("event description is missing, skipping")
-            return event, generated_alerts
+            return generated_alerts, event
         text_to_analyze = event.description
         doc = await loop.run_in_executor(None, nlp, text_to_analyze)
         
