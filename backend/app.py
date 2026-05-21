@@ -25,10 +25,10 @@ async def update_db(db: AsyncSession):
         for news in news_data_newsAPI:
             try:
                 await process_and_save_data(db, news, news.get('url'))
-                print("Data saved to database.")
+                
             except Exception as e:
                 print(f"Error inserting NewsAPI article: {e}")
-
+        print("Data saved to database.")
 
     await process_data(db)  
     print("Processed NLP pipeline.")

@@ -102,10 +102,10 @@ async def save_alerts(db: AsyncSession, location_data_list):
 
     try:
         await db.commit()
-        print(f"✅ Successfully inserted alerts for {len(location_data_list)} items")
+        print(f"Successfully inserted alerts for {len(location_data_list)} items")
     except Exception as e:
         await db.rollback()
-        print(f"❌ Failed to insert map alerts: {e}")
+        print(f"Failed to insert map alerts: {e}")
         raise e
     # Note: Removed db.close() as it often causes 'Session is closed' errors 
     # if the session is managed by a FastAPI lifecycle or caller.

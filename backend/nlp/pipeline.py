@@ -48,9 +48,8 @@ async def process_data(db_session: AsyncSession):
     sem = asyncio.Semaphore(10)
     
     async def throttled_worker(event):
-
-    async with sem:
-        await process_single_event(event, loop)
+        async with sem:
+            await process_single_event(event, loop)
 
     tasks = [throttled_worker(event) for event in events]
     results = await asyncio.gather(*tasks)

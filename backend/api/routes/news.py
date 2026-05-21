@@ -65,9 +65,9 @@ async def run_rss_ingestion(db: AsyncSession):
             
             
             new_event = await process_and_save_data(db, article_data, article_data.get('url'))
-            print("found rss data")
+            
             inserted_news.append(new_event)
-
+    print("found rss data")
     return inserted_news
 
 async def fetch_news_data(db: AsyncSession):
