@@ -78,7 +78,7 @@ async def fetch_news_data(db: AsyncSession):
     result = await db.execute(select(GeoPoliticalEvent).order_by(GeoPoliticalEvent.published_at.desc()).limit(1))
     event = result.scalars().all()
     if not event:
-        print("No events in DB, fetching from NewsAPI...")
+        print("no events in db, requesting newsapi")
         async with httpx.AsyncClient() as client:
             try:
                 
